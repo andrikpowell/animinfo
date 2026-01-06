@@ -153,7 +153,7 @@ Only applicable to `type = "range"`, it sets the end graphic for a range animati
 
 ```widepic = "W_TITLEP";```
 
-This is the main block where the widescreen asset is defined. `animate = clear` explicitly means to not replace the specific lump with a widescreen graphic (mostly used to avoid port auto detecting that widescreen lump). Note that `widepic` blocks stack, and the final block will determine the behaviour to use.
+This is the main block where the widescreen asset is defined. `widepic = clear` explicitly means to not replace the specific lump with a widescreen graphic (mostly used to avoid port auto detecting that widescreen lump). Note that `widepic` blocks stack, and the final block will determine the behaviour to use.
 
 ## Default Handling
 By default, Nyan Doom will create an animation database of the substituted lumps that exist. The main purpose of `animate = clear;` and `widepic = clear;` to tell the port to mark those lumps to not be substituted, and ignore any of those names.
