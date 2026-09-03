@@ -1,4 +1,4 @@
-# ANIMINFO Specification Rev 0.9.0
+# ANIMINFO Specification Rev 1.0.0
 Contents:
 - [Preamble](#preamble)
 - [Lump Format](#lump-format)
@@ -19,19 +19,21 @@ The inclusion of widescreen asset replacement was in direct response to wads cra
 I have had some discussions regarding this lump, saying that animations can be included in some ID24 lumps like DEMOLOOP or SBARINFO. While this is indeed true, I feel that this would fragment animations to a dozen separate lumps. I feel it makes more sense to have a single lump governing animations similar to ANIMATED or ANIMDEFS. The other downside to such a method, is that just to add simple animations for a lump, they would have to create an entire layout lump (which could overwrite other lumps), just to get a simple animation. I feel this the anthesis of what ANIMINFO strives to do. Nyan Doom includes a set of [default animation ranges](https://github.com/andrikpowell/nyan-doom/blob/master/docs/animbg.md) and [widescreen names](https://github.com/andrikpowell/nyan-doom/blob/master/docs/ws.md) that when found, will automatically substitute the lumps. This makes it so easy, that all you would need to know about doom modding was to open a wad file and add graphics in.
 
 ## Lump Format
-ANIMINFO uses the same parser as UMAPINFO, so implementing it into ports are rather simple.
+ANIMINFO uses a parser similar to UMAPINFO, so implementing it into ports are rather simple.
 
 It's implementation however, is a mix between the simplicity of UMAPINFO and structure of JSON. I attempted to see how this lump would be formatted in JSON itself, and found myself unhappy with the result in this particular case. While I can understand the benefits of JSON for some ID24 lumps, it is important for ANIMINFO to be extremely easy to edit.
 
-Unlike UMAPINFO, ANIMINFO includes semicolons `;` similar to JSON to indicate the end of a property. I haven't added semicolons after brackets `{ }` currently, but I have no problem including them, if you think it'll be better in the long run.
+Unlike UMAPINFO, ANIMINFO includes semicolons `;` similar to JSON to indicate the end of a property. It is stricter than UMAPINFO in that semicolons `;` are required after every closing bracket `}`.
+
+Note that all values except `clear` require double quotes `"`;
 
 ## Example
 Here is an example of a full ANIMINFO lump:
 ```
 metadata "ANIMINFO"
 {
-  version = "0.9.0";
-}
+  version = "1.0.0";
+};
 
 lump "titlepic"
 {
@@ -41,42 +43,42 @@ lump "titlepic"
   animate =
   {
     type = "sequence";
-    pic = "S_TITLEP"; tics = 4;
-    pic = "TITLEPIC"; tics = rand(8,30);
-    pic = "TITLEP2"; tics = 4;
-    pic = "TITLEP3"; tics = 7;
-    pic = "TITLEP4"; tics = 22;
-    pic = "TITLEP5"; tics = 45;
-    pic = "TITLEP6"; tics = 5;
-    pic = "TITLEP10"; tics = 8;
-    pic = "E_TITLEP"; tics = 10;
-  }
+    pic = "S_TITLEP"; tics = "4";
+    pic = "TITLEPIC"; tics = "rand(8,30)";
+    pic = "TITLEP2"; tics = "4";
+    pic = "TITLEP3"; tics = "7";
+    pic = "TITLEP4"; tics = "22";
+    pic = "TITLEP5"; tics = "45";
+    pic = "TITLEP6"; tics = "5";
+    pic = "TITLEP10"; tics = "8";
+    pic = "E_TITLEP"; tics = "10";
+  };
   widepic = "W_TITLEP";
-}
+};
 
 lump "HELP"
 {
   animate =
   {
     type = "range";
-    tics = 4;
+    tics = "4";
     startpic = "S_HELP";
     endpic = "E_HELP";
-  }
+  };
   widepic = "W_HELP";
-}
+};
 
 lump "CREDIT"
 {
   animate =
   {
     type = "range";
-    tics = 4;
+    tics = "4";
     startpic = "S_CREDIT";
     endpic = "E_CREDIT";
-  }
+  };
   widepic = "W_CREDIT";
-}
+};
 ```
 
 ## Metadata Entry
@@ -86,7 +88,7 @@ metadata "ANIMINFO"
 {
   key = "value";
   ...
-}
+};
 ```
 
 ### Version
@@ -100,7 +102,7 @@ lump "LUMPNAME"
     key = value
     key = value1, value2,...
     ...
-}
+};
 ```
 Values will be treated like strings, even if numbers, requiring quotation marks (`"`). An exception to this rule is the value `clear` which "clears" out the value.
 
@@ -109,11 +111,11 @@ Values will be treated like strings, even if numbers, requiring quotation marks 
 
 ```
 animate = 
-  key = value;
-  key = value; key = value;
-  key = value; key = rand(min, max);
+  key = "value";
+  key = "value"; key = "value";
+  key = "value"; key = "rand(min, max)";
   ...
-}
+};
 ```
 This is the main block where animations are defined. `animate = clear` explicitly means to not replace the specific lump with an animation. Note that `animate` blocks stack, and the final block will determine the behaviour to use.
 
@@ -130,13 +132,15 @@ Only applicable to when `type = "sequence"`, it allows for a specific graphic to
 ### Tics
 ```tics = "#";```
 
-```tics = rand(min #, max #);```
+```tics = "rand(min #, max #)";```
 
 Required key, unless `clear` is used. Used for both `type = "range"` and `type = "sequence"`. Specifies how long the graphic should show before moving to the next frame. `"range"` animations only have to to use this key once, while `"sequence"` animations must specify `tics` after every frame. There is no inheriting tics from the previous frame.
 
 Note that if an animation is defined, this key is required. A error will show at startup, if tics are not specified.
 
-Random duration tics can be used for the value, but require the format `rand(min, max)`. The min is the lowest frame duration, with max as the highest frame duration. These tics are truly random and will change everytime the animation plays.
+Random duration tics can be used for the value, but require the format `"rand(min, max)"`. The min is the lowest frame duration, with max as the highest frame duration. These tics are truly random and will change everytime the animation plays.
+
+Note that with all values, a tics `"value"` or `"rand(min, max)"` are required to use double quotes `"`;
 
 ### Startpic
 ```startpic = "S_TITLEP";```
@@ -158,6 +162,6 @@ This is the main block where the widescreen asset is defined. `widepic = clear` 
 ## Default Handling
 By default, Nyan Doom will create an animation database of the substituted lumps that exist. The main purpose of `animate = clear;` and `widepic = clear;` to tell the port to mark those lumps to not be substituted, and ignore any of those names.
 
-Regarding the default animation ranges and widepics, Nyan Doom will skip animations and widepics it does not find. This works well as the default as only wads to want to use this functionality, will be able to just load a wad and have the animations happen. Note that the default tic duration of autodetected lumps is `8`. Allowing support for custom lumps specified in UMAPINFO's `enterpic`, Nyan Doom can and will update the animation database during run-time to check whether an animation or widepic exists.
+Regarding the default animation ranges and widepics, Nyan Doom will skip animations and widepics it does not find. This works well as the default as only wads to want to use this functionality, will be able to just load a wad and have the animations happen. Note that the default tic duration of autodetected lumps is `"8"`. Allowing support for custom lumps specified in UMAPINFO's `enterpic`, Nyan Doom can and will update the animation database during run-time to check whether an animation or widepic exists.
 
 "ANIMINFO" is much different when it comes to this behaviour. "ANIMINFO" parsing is very strict, and if a `tics` block or a `pic`/`enterpic`/`exitpic` lump specified doesn't exist, it will throw an error at startup. Currently due to how animation "ranges" work, it does not check frames in-between at the moment.
