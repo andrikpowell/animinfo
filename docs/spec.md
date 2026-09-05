@@ -23,9 +23,7 @@ ANIMINFO uses a parser similar to UMAPINFO, so implementing it into ports are ra
 
 It's implementation however, is a mix between the simplicity of UMAPINFO and structure of JSON. I attempted to see how this lump would be formatted in JSON itself, and found myself unhappy with the result in this particular case. While I can understand the benefits of JSON for some ID24 lumps, it is important for ANIMINFO to be extremely easy to edit.
 
-Unlike UMAPINFO, ANIMINFO includes semicolons `;` similar to JSON to indicate the end of a property. It is stricter than UMAPINFO in that semicolons `;` are required after every closing bracket `}`.
-
-Note that all values except `clear` require double quotes `"`;
+Lump names and version strings require double quotes. Keywords, Boolean values, and numeric values are unquoted.
 
 ## Example
 Here is an example of a full ANIMINFO lump:
@@ -33,7 +31,7 @@ Here is an example of a full ANIMINFO lump:
 metadata "ANIMINFO"
 {
   version = "1.0.0";
-};
+}
 
 lump "titlepic"
 {
@@ -42,43 +40,44 @@ lump "titlepic"
 
   animate =
   {
-    type = "sequence";
-    pic = "S_TITLEP"; tics = "4";
-    pic = "TITLEPIC"; tics = "rand(8,30)";
-    pic = "TITLEP2"; tics = "4";
-    pic = "TITLEP3"; tics = "7";
-    pic = "TITLEP4"; tics = "22";
-    pic = "TITLEP5"; tics = "45";
-    pic = "TITLEP6"; tics = "5";
-    pic = "TITLEP10"; tics = "8";
-    pic = "E_TITLEP"; tics = "10";
-  };
+    type = sequence;
+    oscillate = true;
+    pic = "S_TITLEP"; tics = 4;
+    pic = "TITLEPIC"; tics = rand(8, 30);
+    pic = "TITLEP2"; tics = 4;
+    pic = "TITLEP3"; tics = 7;
+    pic = "TITLEP4"; tics = 22;
+    pic = "TITLEP5"; tics = 45;
+    pic = "TITLEP6"; tics = 5;
+    pic = "TITLEP10"; tics = 8;
+    pic = "E_TITLEP"; tics = 10;
+  }
   widepic = "W_TITLEP";
-};
+}
 
 lump "HELP"
 {
   animate =
   {
-    type = "range";
-    tics = "4";
+    type = range;
+    tics = 4;
     startpic = "S_HELP";
     endpic = "E_HELP";
-  };
+  }
   widepic = "W_HELP";
-};
+}
 
 lump "CREDIT"
 {
   animate =
   {
-    type = "range";
-    tics = "4";
+    type = range;
+    tics = 4;
     startpic = "S_CREDIT";
     endpic = "E_CREDIT";
-  };
+  }
   widepic = "W_CREDIT";
-};
+}
 ```
 
 ## Metadata Entry
@@ -88,7 +87,7 @@ metadata "ANIMINFO"
 {
   key = "value";
   ...
-};
+}
 ```
 
 ### Version
@@ -99,58 +98,60 @@ Specifies the version of the lump. This I feel is very important when it comes t
 ```
 lump "LUMPNAME"
 {
-    key = value
-    key = value1, value2,...
+    key = value;
     ...
-};
+}
 ```
-Values will be treated like strings, even if numbers, requiring quotation marks (`"`). An exception to this rule is the value `clear` which "clears" out the value.
+Lump names and version strings require quotation marks (`"`). Keywords such as `range`, `sequence`, and `clear`, Boolean values, and numeric values are unquoted.
 
 ## Animate
-```animate = clear```
+```animate = clear;```
 
 ```
 animate = 
+{
   key = "value";
-  key = "value"; key = "value";
-  key = "value"; key = "rand(min, max)";
+  key = value;
   ...
-};
+}
 ```
-This is the main block where animations are defined. `animate = clear` explicitly means to not replace the specific lump with an animation. Note that `animate` blocks stack, and the final block will determine the behaviour to use.
+This is the main block where animations are defined. `animate = clear;` explicitly disables animation substitution for the specified lump. Note that `animate` definitions stack, and the final definition determines the behavior to use.
 
 ### Type
-```type = "range";```
+```type = range;```
 
-Specifies the animation type. Currently there are 2 support types: "range" which specifies a start and end lump, animating the lumps in-between; and "sequence" which allows every frame of an animation to be defined.
+Specifies the animation type. Currently there are two supported types: `range`, which specifies a start and end lump and animates the lumps in between; and `sequence`, which allows every frame of an animation to be defined.
+
+### Oscillate
+```oscillate = true;```
+
+Optional Boolean property supported by both animation types. When `false` or omitted, the animation loops from the final frame directly to the first. When `true`, it plays forward and then backward in a loop.
 
 ### Pic
 ```pic = "TITLEP12";```
 
-Only applicable to when `type = "sequence"`, it allows for a specific graphic to be shown during that frame of the animation.
+Only applicable when `type = sequence`, it adds the specified graphic as a frame of the animation. Every `pic` must be followed by its own `tics` property.
 
 ### Tics
-```tics = "#";```
+```tics = #;```
 
-```tics = "rand(min #, max #)";```
+```tics = rand(min, max);```
 
-Required key, unless `clear` is used. Used for both `type = "range"` and `type = "sequence"`. Specifies how long the graphic should show before moving to the next frame. `"range"` animations only have to to use this key once, while `"sequence"` animations must specify `tics` after every frame. There is no inheriting tics from the previous frame.
+Required property in an animation definition. It is used by both `type = range` and `type = sequence` and specifies how long the graphic is shown before moving to the next frame. Range animations use this property once, while sequence animations must specify `tics` after every frame. Timing is not inherited from the previous frame.
 
-Note that if an animation is defined, this key is required. A error will show at startup, if tics are not specified.
+If an animation is defined, this property is required. An error is shown at startup if the required timing is not specified.
 
-Random duration tics can be used for the value, but require the format `"rand(min, max)"`. The min is the lowest frame duration, with max as the highest frame duration. These tics are truly random and will change everytime the animation plays.
-
-Note that with all values, a tics `"value"` or `"rand(min, max)"` are required to use double quotes `"`;
+Fixed durations are positive, unquoted integers. Random durations use the unquoted `rand(min, max)` form and select a value between `min` and `max` whenever the frame begins. Both values must be positive, `min` must not exceed `max`, and no tic value may exceed 65,535 (~30 minutes).
 
 ### Startpic
 ```startpic = "S_TITLEP";```
 
-Only applicable to `type = "range"`, it sets the starting graphic for a range animation. Key is required for `"range"`, and will throw an error at startup, if not found.
+Only applicable to `type = range`, it sets the starting graphic for a range animation. The property is required for ranges and produces an error at startup if the lump is not found.
 
 ### Endpic
 ```endpic = "E_TITLEP";```
 
-Only applicable to `type = "range"`, it sets the end graphic for a range animation. Key is required for `"range"`, and will throw an error at startup, if not found.
+Only applicable to `type = range`, it sets the ending graphic for a range animation. The property is required for ranges and produces an error at startup if the lump is not found. The start lump must precede the end lump in WAD-directory order.
 
 ## Widepic
 ```widepic = clear;```
@@ -160,8 +161,8 @@ Only applicable to `type = "range"`, it sets the end graphic for a range animati
 This is the main block where the widescreen asset is defined. `widepic = clear` explicitly means to not replace the specific lump with a widescreen graphic (mostly used to avoid port auto detecting that widescreen lump). Note that `widepic` blocks stack, and the final block will determine the behaviour to use.
 
 ## Default Handling
-By default, Nyan Doom will create an animation database of the substituted lumps that exist. The main purpose of `animate = clear;` and `widepic = clear;` to tell the port to mark those lumps to not be substituted, and ignore any of those names.
+By default, Nyan Doom creates an animation database from the substituted lumps that exist. The purpose of `animate = clear;` and `widepic = clear;` is to prevent those automatic substitutions for a particular lump.
 
-Regarding the default animation ranges and widepics, Nyan Doom will skip animations and widepics it does not find. This works well as the default as only wads to want to use this functionality, will be able to just load a wad and have the animations happen. Note that the default tic duration of autodetected lumps is `"8"`. Allowing support for custom lumps specified in UMAPINFO's `enterpic`, Nyan Doom can and will update the animation database during run-time to check whether an animation or widepic exists.
+Regarding the default animation ranges and widepics, Nyan Doom skips animations and widepics it does not find. The default tic duration of automatically detected animations is `8`, and they loop without oscillation. To support custom lumps referenced by properties such as UMAPINFO's `enterpic`, Nyan Doom can update the animation database at run time to check whether an animation or widepic exists.
 
-"ANIMINFO" is much different when it comes to this behaviour. "ANIMINFO" parsing is very strict, and if a `tics` block or a `pic`/`enterpic`/`exitpic` lump specified doesn't exist, it will throw an error at startup. Currently due to how animation "ranges" work, it does not check frames in-between at the moment.
+"ANIMINFO" parsing is very strict. Missing required properties, invalid timing values, or missing lumps will produce an error at startup, by design. Range animations only validate the starting and ending lumps, and do not validate every lump between them.
