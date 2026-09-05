@@ -7,6 +7,7 @@ The full specification is available [here](./docs/spec.md).
 ### Revision History
 
 - Rev 1.0.0 (@andrikpowell, Sep 5 2026)
-  - Enforce stricter formatting 
+  - Enforce stricter formatting
+  - Add `Oscillate` property
 - Rev 0.9.0 (@andrikpowell, Jan 6 2026)
   - Initial draft implementation.
